@@ -58,8 +58,10 @@ public class RunAlgo {
 			 * Delete all edges passing from u from E. 
 			 */
 			for (Iterator<Edge> it = e.iterator(); it.hasNext();) {
-				if (it.next().from.nodeNumber == u.nodeNumber) {				
-					it.remove();
+				Edge next = it.next();
+				if (next.from.nodeNumber == u.nodeNumber ||
+				   	next.to.nodeNumber == u.nodeNumber) {				
+				it.remove();
 				}
 			}
 			
@@ -68,8 +70,10 @@ public class RunAlgo {
 			 */
 			for (NodeDegree nr: neighbours) {															
 				for (Iterator<Edge> it = e.iterator(); it.hasNext();) {
-					if (it.next().from.nodeNumber == nr.nodeNumber) {
-						it.remove();
+					Edge next = it.next();
+					if (next.from.nodeNumber == nr.nodeNumber ||
+					   	next.to.nodeNumber == nr.nodeNumber) {
+					it.remove();
 					}
 				}
 			}
