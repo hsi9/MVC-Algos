@@ -61,7 +61,7 @@ public class RunAlgo {
 				Edge next = it.next();
 				if (next.from.nodeNumber == u.nodeNumber ||
 				   	next.to.nodeNumber == u.nodeNumber) {				
-				it.remove();
+					it.remove();
 				}
 			}
 			
@@ -73,7 +73,7 @@ public class RunAlgo {
 					Edge next = it.next();
 					if (next.from.nodeNumber == nr.nodeNumber ||
 					   	next.to.nodeNumber == nr.nodeNumber) {
-					it.remove();
+						it.remove();
 					}
 				}
 			}
