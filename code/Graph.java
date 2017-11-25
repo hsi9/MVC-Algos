@@ -53,6 +53,11 @@ class Graph
 		}
 	}
 
+	public HashMap<Integer, Integer> getNeighbours(int i)
+	{
+		return graph.get(i);
+	}
+
 	public int getEdgeWeight(int node1, int node2)
 	{
 		//return graph[node1][node2];

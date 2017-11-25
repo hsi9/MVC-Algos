@@ -7,12 +7,14 @@ import java.util.Map;
 
 public class LocalGraph extends Graph {
     int numEdges;
+    int totalWeight;
     List<Node> nodeList;
     HashMap<String, Edge> edgeTable;
 
     LocalGraph(int n, int m) {
         super(n);
         this.numEdges = m;
+        this.totalWeight = m;
         this.nodeList = new ArrayList<>(n);
         this.edgeTable = new HashMap<>(); // hash table used to store DC value of each edge
 
@@ -56,7 +58,7 @@ public class LocalGraph extends Graph {
     }
 
     public void addNodeProbChosen(int nodeNumber, double increment) {
-        if(this.nodeList.get(nodeNumber).sumProbChosen == -1) {
+        if(this.nodeList.get(nodeNumber).sumProbChosen == Double.NaN) {
             this.nodeList.get(nodeNumber).sumProbChosen = increment;
         } else {
             this.nodeList.get(nodeNumber).sumProbChosen += increment;
@@ -74,6 +76,25 @@ public class LocalGraph extends Graph {
             double DC = 1 - (node1.getSumProbChosen() + node2.getSumProbChosen()) * 0.5;
             edge.setDC(DC);
         }
+    }
+
+    public void refreshEdgeDC() {
+        // reset the sumProbChosen for each node in nodeList
+        for(int i = 0; i < this.numNodes; i++) {
+            this.nodeList.get(i).sumProbChosen = 0.0;
+        }
+
+        // recompute the value of ProbChosen for each Edge
+        Edge edge;
+        for(Map.Entry<String, Edge> wrappedEdge: this.edgeTable.entrySet()) {
+            edge = wrappedEdge.getValue();
+            edge.setProbChosen(edge.weight / this.totalWeight);
+            this.nodeList.get(edge.getNode1()).sumProbChosen += edge.probChosen;
+            this.nodeList.get(edge.getNode2()).sumProbChosen += edge.probChosen;
+        }
+
+        // recompute DC value for each edges
+        this.initEdgeDC();
     }
 
     public static LocalGraph readGraph(String graphFilePath) {
@@ -136,14 +157,14 @@ public class LocalGraph extends Graph {
 class Node implements Comparable<Node> {
     int nodeNumber;
     int degree;
-    double sumProbChosen;
-    int importance; // namely, summation of DC values of its adjacent edges
+    Double sumProbChosen;
+    Double cost; // namely, summation of DC values of its uncovered adjacent edges
 
     Node(int nodeNumber) {
         this.nodeNumber = nodeNumber;
         this.degree = 0;
-        this.sumProbChosen = -1;
-        this.importance = -1;
+        this.sumProbChosen = Double.NaN;
+        this.cost = Double.NaN;
     }
 
     @Override
@@ -153,7 +174,7 @@ class Node implements Comparable<Node> {
 
     @Override
     public int compareTo(Node arg0){
-        int compare=Double.compare(this.importance, arg0.importance);
+        int compare=Double.compare(this.cost, arg0.cost);
         if(compare==0){
             compare=Integer.compare(this.nodeNumber, arg0.nodeNumber);
         }
@@ -171,8 +192,6 @@ class Node implements Comparable<Node> {
     public double getSumProbChosen() {
         return this.sumProbChosen;
     }
-
-
 }
 
 class Edge {

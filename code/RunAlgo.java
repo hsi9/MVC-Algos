@@ -12,7 +12,7 @@ public class RunAlgo
 		BufferedWriter bw = null;
 		String line=null;
 		String[] tokens=null;
-		
+		ApproxAlgo approxAlgo =null;
 		try
 		{
 			br=new BufferedReader(new FileReader(args[0]));
@@ -40,8 +40,12 @@ public class RunAlgo
 				//System.out.println(line);
 				
 			}
-			graph.printGraph();
+			//graph.printGraph();
+
 			br.close();
+			approxAlgo = new ApproxAlgo(graph);
+			approxAlgo.runAlgo(graph);
+
 			//bw.close();
 		}
 		catch(Exception e)
