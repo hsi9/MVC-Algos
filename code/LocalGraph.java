@@ -8,6 +8,7 @@ import java.util.Map;
 public class LocalGraph extends Graph {
     int numEdges;
     int totalWeight;
+    //int maxWeight;
     List<Node> nodeList;
     HashMap<String, Edge> edgeTable;
 
@@ -17,6 +18,7 @@ public class LocalGraph extends Graph {
         this.totalWeight = m;
         this.nodeList = new ArrayList<>(n);
         this.edgeTable = new HashMap<>(); // hash table used to store DC value of each edge
+        //this.maxWeight = 1;
 
         // initialize the nodeList with all degree be 0
         for(int i = 0; i < n; i++) {
@@ -78,7 +80,7 @@ public class LocalGraph extends Graph {
         }
     }
 
-    public void refreshEdgeDC() {
+    public void refreshEdgeDC(int totalChosenTime) {
         // reset the sumProbChosen for each node in nodeList
         for(int i = 0; i < this.numNodes; i++) {
             this.nodeList.get(i).sumProbChosen = 0.0;
@@ -88,13 +90,14 @@ public class LocalGraph extends Graph {
         Edge edge;
         for(Map.Entry<String, Edge> wrappedEdge: this.edgeTable.entrySet()) {
             edge = wrappedEdge.getValue();
-            edge.setProbChosen(edge.weight / this.totalWeight);
-            this.nodeList.get(edge.getNode1()).sumProbChosen += edge.probChosen;
-            this.nodeList.get(edge.getNode2()).sumProbChosen += edge.probChosen;
+            edge.setProbChosen((double) edge.weight / this.totalWeight);
+            edge.setDC(1 - ((double) edge.weight / totalChosenTime));
+            //this.nodeList.get(edge.getNode1()).sumProbChosen += edge.probChosen;
+            //this.nodeList.get(edge.getNode2()).sumProbChosen += edge.probChosen;
         }
 
         // recompute DC value for each edges
-        this.initEdgeDC();
+        //this.initEdgeDC();
     }
 
     public static LocalGraph readGraph(String graphFilePath) {
@@ -125,7 +128,6 @@ public class LocalGraph extends Graph {
                 //System.out.println(line);
             }
 
-            //graph.printGraph();
             br.close();
             //bw.close();
             graph.initEdgeDC();
@@ -141,7 +143,6 @@ public class LocalGraph extends Graph {
 
     @Override
     public void printGraph() {
-        super.printGraph();
         System.out.println("node1\tnode2\tweight\tprobChosen\tDC");
         for(Map.Entry<String, Edge> wrappedEdge : this.edgeTable.entrySet()) {
             Edge edge = wrappedEdge.getValue();
@@ -159,12 +160,17 @@ class Node implements Comparable<Node> {
     int degree;
     Double sumProbChosen;
     Double cost; // namely, summation of DC values of its uncovered adjacent edges
+    //Double maxCost;
+    int costEdge;
+
 
     Node(int nodeNumber) {
         this.nodeNumber = nodeNumber;
         this.degree = 0;
-        this.sumProbChosen = Double.NaN;
+        this.sumProbChosen = 0.0;
         this.cost = Double.NaN;
+        //this.maxCost = Double.NaN;
+        this.costEdge = 0;
     }
 
     @Override
@@ -176,17 +182,9 @@ class Node implements Comparable<Node> {
     public int compareTo(Node arg0){
         int compare=Double.compare(this.cost, arg0.cost);
         if(compare==0){
-            compare=Integer.compare(this.nodeNumber, arg0.nodeNumber);
+            compare=Integer.compare(this.degree, arg0.nodeNumber);
         }
         return compare;
-    }
-
-    public void setDegree(int degree) {
-        this.degree = degree;
-    }
-
-    public int getDegree() {
-        return this.degree;
     }
 
     public double getSumProbChosen() {

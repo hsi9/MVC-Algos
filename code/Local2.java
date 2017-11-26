@@ -1,5 +1,3 @@
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.util.*;
 
 public class Local2 {
@@ -11,45 +9,80 @@ public class Local2 {
 
         // Get the initial feasible solution using heuristic construction
         LocalGraph graph = LocalGraph.readGraph(args[0]);
-        Set<Integer> tempSolution = getInitSolution(graph);
+        //graph.printGraph();
+        Set<Integer> tempOpt = getInitSolution(graph);
+        Set<Integer> tempSolution = new HashSet<>(tempOpt);
+        System.out.println(tempOpt.size());
+
+        // Initialize the taboo list
+        Set<Integer> tabooSet = new HashSet<>();
 
         // Build initial partial solution
         // drop out a randomly selected vertex from the solution set of vertices
         Random rnd = new Random();
         int i = rnd.nextInt(tempSolution.size());
-        tempSolution.remove(i);
+        tempSolution.remove(tempSolution.toArray()[i]);
+        tabooSet.add(i);
+        System.out.println(tempOpt.size());
 
         // Build a partial solution instance for the local search algorithm, using the result above
         Local2Solution partialSolution = new Local2Solution(tempSolution, graph);
 
-        // Initialize the taboo list
-        List<Node> taboo = new ArrayList<>();
+
 
 
         ////////////////////////////////////////////////////////////////////////
         /////////////////////////////// EXECUTION //////////////////////////////
         ////////////////////////////////////////////////////////////////////////
 
-        long timeLimit = 600 * 1000000000L;
+        long timeLimit = 20 * 1000000000L;
         long startTime = System.nanoTime();
+        int iterTime = 0;
+        System.out.println(timeLimit);
         while(System.nanoTime() - startTime < timeLimit) {
+            iterTime++;
+            Double lastUncoveredDC = partialSolution.uncoveredDC;
             Node droppedNode = partialSolution.DropNode(graph);
             Node addedNode = partialSolution.AddNode(graph);
-            if(partialSolution.checkValidCover()) {
-                tempSolution = partialSolution.partialSolution;
-                i = rnd.nextInt(tempSolution.size());
-                tempSolution.remove(i);
+            if(partialSolution.uncoveredDC == 0.0 && partialSolution.uncoveredEdge == 0) {
+                tempOpt = partialSolution.partialSolution;
+                tempSolution = new HashSet<>(partialSolution.partialSolution);
+                while(tempSolution.size() == tempOpt.size()) {
+                    i = rnd.nextInt(tempSolution.size());
+                    tempSolution.remove(tempSolution.toArray()[i]);
+                }
+
+                tabooSet = new HashSet<>();
+                tabooSet.add(i);
                 partialSolution = new Local2Solution(tempSolution, graph);
+                //System.out.println(tempOpt.size());
             }
 
-            if(droppedNode.nodeNumber == addedNode.nodeNumber) {
+            if(droppedNode.nodeNumber == addedNode.nodeNumber || (partialSolution.uncoveredDC >= lastUncoveredDC && lastUncoveredDC != 0)) {
                 // when dropped and added the same node, this means we get stuck in local optima
-                graph.refreshEdgeDC(); // recopute DC value for each edges
+                if(tabooSet.size() == tempOpt.size()) {
+                    graph.refreshEdgeDC(iterTime); // recopute DC value for each edges
+                    tabooSet = new HashSet<>();
+                }
+                tempSolution = new HashSet<>(tempOpt);
+                while(tempSolution.size() == tempOpt.size()) {
+                    i = rnd.nextInt(tempSolution.size());
+                    if(tabooSet.contains(i)) continue;
+                    tempSolution.remove(tempSolution.toArray()[i]);
+                }
+
+                tabooSet.add(i);
+                //System.out.println("Taboo Size = "+tabooSet.size());
                 partialSolution = new Local2Solution(tempSolution, graph); // reconstruct the current solution
+                //System.out.println("Local Minima");
+                //graph.printGraph();
             }
+            //System.out.println(partialSolution.uncoveredDC);
+            // System.out.println("Time: " + (double) (System.nanoTime() - startTime) / 1000000000L + "\t Opt = " +  tempOpt.size() + "\t DC = " + partialSolution.uncoveredDC);
+            // System.out.println("Uncovered Edge Number: " + partialSolution.uncoveredEdge);
         }
 
-        System.out.println(tempSolution.size());
+        System.out.println("Opt = " +  tempOpt.size());
     }
 
     /*
