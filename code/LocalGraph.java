@@ -90,8 +90,8 @@ public class LocalGraph extends Graph {
             edge = wrappedEdge.getValue();
             edge.setProbChosen((double) edge.weight / this.totalWeight);
             edge.setDC(1 - ((double) edge.weight / totalChosenTime));
-            this.nodeList.get(edge.getNode1()).sumProbChosen += edge.probChosen;
-            this.nodeList.get(edge.getNode2()).sumProbChosen += edge.probChosen;
+            //this.nodeList.get(edge.getNode1()).sumProbChosen += edge.probChosen;
+            //this.nodeList.get(edge.getNode2()).sumProbChosen += edge.probChosen;
         }
 
         // recompute DC value for each edges
@@ -181,14 +181,6 @@ class Node implements Comparable<Node> {
             compare=Double.compare(this.sumProbChosen, arg0.sumProbChosen);
         }
         return compare;
-    }
-
-    public void setDegree(int degree) {
-        this.degree = degree;
-    }
-
-    public int getDegree() {
-        return this.degree;
     }
 
     public double getSumProbChosen() {
