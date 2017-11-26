@@ -8,7 +8,6 @@ import java.util.Map;
 public class LocalGraph extends Graph {
     int numEdges;
     int totalWeight;
-    //int maxWeight;
     List<Node> nodeList;
     HashMap<String, Edge> edgeTable;
 
@@ -18,7 +17,6 @@ public class LocalGraph extends Graph {
         this.totalWeight = m;
         this.nodeList = new ArrayList<>(n);
         this.edgeTable = new HashMap<>(); // hash table used to store DC value of each edge
-        //this.maxWeight = 1;
 
         // initialize the nodeList with all degree be 0
         for(int i = 0; i < n; i++) {
@@ -92,8 +90,8 @@ public class LocalGraph extends Graph {
             edge = wrappedEdge.getValue();
             edge.setProbChosen((double) edge.weight / this.totalWeight);
             edge.setDC(1 - ((double) edge.weight / totalChosenTime));
-            //this.nodeList.get(edge.getNode1()).sumProbChosen += edge.probChosen;
-            //this.nodeList.get(edge.getNode2()).sumProbChosen += edge.probChosen;
+            this.nodeList.get(edge.getNode1()).sumProbChosen += edge.probChosen;
+            this.nodeList.get(edge.getNode2()).sumProbChosen += edge.probChosen;
         }
 
         // recompute DC value for each edges
@@ -128,6 +126,7 @@ public class LocalGraph extends Graph {
                 //System.out.println(line);
             }
 
+            //graph.printGraph();
             br.close();
             //bw.close();
             graph.initEdgeDC();
@@ -160,16 +159,13 @@ class Node implements Comparable<Node> {
     int degree;
     Double sumProbChosen;
     Double cost; // namely, summation of DC values of its uncovered adjacent edges
-    //Double maxCost;
     int costEdge;
-
 
     Node(int nodeNumber) {
         this.nodeNumber = nodeNumber;
         this.degree = 0;
         this.sumProbChosen = 0.0;
         this.cost = Double.NaN;
-        //this.maxCost = Double.NaN;
         this.costEdge = 0;
     }
 
@@ -182,9 +178,17 @@ class Node implements Comparable<Node> {
     public int compareTo(Node arg0){
         int compare=Double.compare(this.cost, arg0.cost);
         if(compare==0){
-            compare=Integer.compare(this.degree, arg0.nodeNumber);
+            compare=Double.compare(this.sumProbChosen, arg0.sumProbChosen);
         }
         return compare;
+    }
+
+    public void setDegree(int degree) {
+        this.degree = degree;
+    }
+
+    public int getDegree() {
+        return this.degree;
     }
 
     public double getSumProbChosen() {

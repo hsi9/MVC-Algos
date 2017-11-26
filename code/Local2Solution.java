@@ -25,7 +25,6 @@ public class Local2Solution {
                 // if the (i+1)-th node of the current graph is in tempSolution
                 // compute the cost value for this node
                 graph.nodeList.get(i).cost = 0.0;
-                //graph.nodeList.get(i).maxCost = 0.0;
                 for(Map.Entry<Integer, Integer> neighbour : graph.getNeighbours(i).entrySet()) {
                     if(!tempSolution.contains(neighbour.getKey())) {
                         // if the neighbour is not inside the current solution
@@ -33,7 +32,6 @@ public class Local2Solution {
                         // increment the cost of current node by the DC value of edge <current_node, current_neighbor>
                         graph.nodeList.get(i).cost += graph.edgeTable.get(Edge.toString(i,neighbour.getKey())).getDC();
                         graph.nodeList.get(i).costEdge++;
-                        //graph.nodeList.get(i).maxCost = Math.max(graph.nodeList.get(i).maxCost, graph.edgeTable.get(Edge.toString(i,neighbour.getKey())).getDC());
                     }
                 }
                 // add the node to insideSolution
@@ -42,7 +40,6 @@ public class Local2Solution {
                 // if the (i+1)-th node of the current graph is not in tempSolution
                 // compute the cost value for this node
                 graph.nodeList.get(i).cost = 0.0;
-                //graph.nodeList.get(i).maxCost = 0.0;
                 for(Map.Entry<Integer, Integer> neighbour : graph.getNeighbours(i).entrySet()) {
                     if(!tempSolution.contains(neighbour.getKey())) {
                         // if the neighbour is not inside the current solution
@@ -50,7 +47,6 @@ public class Local2Solution {
                         // decrease the cost of current node by the DC value of edge <current_node, current_neighbor>
                         graph.nodeList.get(i).cost -= graph.edgeTable.get(Edge.toString(i,neighbour.getKey())).getDC();
                         graph.nodeList.get(i).costEdge--;
-                        //graph.nodeList.get(i).maxCost = -Math.max(Math.abs(graph.nodeList.get(i).maxCost), graph.edgeTable.get(Edge.toString(i,neighbour.getKey())).getDC());
                     }
                 }
                 // add the node to outsideSolution
@@ -73,9 +69,43 @@ public class Local2Solution {
         }
     }
 
-    public Node DropNode(LocalGraph graph) {
+    public Node dropFirst(LocalGraph graph, Set<Node> tabooSet) {
+        Node node = this.insideSolution.first();//pollFirst();
+        while(tabooSet.contains(node)) {
+            node = this.insideSolution.higher(node);
+            if(node == null) return null;
+        }
+        return this.DropNode(graph, node);
+    }
+
+    public Node dropRandom(LocalGraph graph) {
+        Random rnd = new Random();
+        int i = rnd.nextInt(this.insideSolution.size());
+        Node node = (Node) this.insideSolution.toArray()[i];
+        return this.DropNode(graph, node);
+    }
+
+    public Node addFirst(LocalGraph graph, Set<Node> tabooSet) {
+        Node node = this.outsideSolution.first();//pollFirst();
+        while(tabooSet.contains(node)) {
+            node = this.outsideSolution.higher(node);
+            if(node == null) return null;
+        }
+        return this.AddNode(graph, node);
+    }
+
+    public Node addRandom(LocalGraph graph) {
+        Random rnd = new Random();
+        int i = rnd.nextInt(this.outsideSolution.size());
+        Node node = (Node) this.outsideSolution.toArray()[i];
+        return this.AddNode(graph, node);
+    }
+
+    public Node DropNode(LocalGraph graph, Node toDrop) {
         // drop the node with the lowest cost and store it in "node"
-        Node node = this.insideSolution.pollFirst();
+        // Node node = this.insideSolution.pollFirst();
+        Node node = toDrop;
+        this.insideSolution.remove(node);
 
         // add the node to outsideSolution
         this.outsideSolution.add(node);
@@ -88,7 +118,6 @@ public class Local2Solution {
         // update the cost of the current node
         node.cost = -node.cost;
         node.costEdge = -node.costEdge;
-        //node.maxCost = -node.maxCost;
 
         // update the cost value for the neighbors of the dropped node
         for(Map.Entry<Integer, Integer> neighbour : graph.getNeighbours(node.nodeNumber).entrySet()) {
@@ -115,9 +144,11 @@ public class Local2Solution {
         return node;
     }
 
-    public Node AddNode(LocalGraph graph) {
+    public Node AddNode(LocalGraph graph, Node toAdd) {
         // drop the node with the lowest cost and store it in "node"
-        Node node = this.outsideSolution.pollFirst();
+        //Node node = this.outsideSolution.pollFirst();
+        Node node = toAdd;
+        this.outsideSolution.remove(node);
 
         // add the node to insideSolution
         this.insideSolution.add(node);
@@ -154,9 +185,6 @@ public class Local2Solution {
             // update the weight value for each chosen edge
             graph.edgeTable.get(Edge.toString(node.nodeNumber,neighbour.getKey())).weight++;
             graph.totalWeight++;
-//            if(graph.edgeTable.get(Edge.toString(node.nodeNumber,neighbour.getKey())).weight > graph.maxWeight) {
-//                graph.maxWeight = graph.edgeTable.get(Edge.toString(node.nodeNumber,neighbour.getKey())).weight;
-//            }
 
             // update sumProbChosen value for each node
         }
