@@ -89,6 +89,7 @@ public class LocalGraph extends Graph {
         for(Map.Entry<String, Edge> wrappedEdge: this.edgeTable.entrySet()) {
             edge = wrappedEdge.getValue();
             edge.setProbChosen((double) edge.weight / this.totalWeight);
+            //edge.setDC(-edge.getDC());
             edge.setDC(1 - ((double) edge.weight / totalChosenTime));
             //this.nodeList.get(edge.getNode1()).sumProbChosen += edge.probChosen;
             //this.nodeList.get(edge.getNode2()).sumProbChosen += edge.probChosen;
@@ -238,5 +239,3 @@ class Edge {
         return this.DC;
     }
 }
-
-

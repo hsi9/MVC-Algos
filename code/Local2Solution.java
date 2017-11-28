@@ -78,8 +78,8 @@ public class Local2Solution {
         return this.DropNode(graph, node);
     }
 
-    public Node dropRandom(LocalGraph graph) {
-        Random rnd = new Random();
+    public Node dropRandom(LocalGraph graph, Random rnd) {
+        //Random rnd = new Random();
         int i = rnd.nextInt(this.insideSolution.size());
         Node node = (Node) this.insideSolution.toArray()[i];
         return this.DropNode(graph, node);
@@ -94,8 +94,8 @@ public class Local2Solution {
         return this.AddNode(graph, node);
     }
 
-    public Node addRandom(LocalGraph graph) {
-        Random rnd = new Random();
+    public Node addRandom(LocalGraph graph, Random rnd) {
+        //Random rnd = new Random();
         int i = rnd.nextInt(this.outsideSolution.size());
         Node node = (Node) this.outsideSolution.toArray()[i];
         return this.AddNode(graph, node);

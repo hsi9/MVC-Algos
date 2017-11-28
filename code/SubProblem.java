@@ -75,14 +75,50 @@ public class SubProblem {
         return rightSubProblem;
     }
 
-    /* based on the current partial, compute the upperbound of the problem
+    /*
+     * based on the current partial solution, check whether the subproblem deserves exploration
+     * If the computed lower bound of the sub-problem is higher than the upperbound, then discard the subproblem
+     * If the computed lower bound of the sub-problem is lower than the upperbound, then the sub-prorblem is promising
+     * If the current sub-problem is
+     */
+    public int evaluateSubProblem() {
+        // firstly update the upperBound and lowerbound
+        this.setLowerBound();
+        this.checkUpperBound();
+
+        if(this.subGraph.numEdges == 0) {
+            return 0; //  current partial solution is already a feasible solution to MVC, do not add it into stack
+        }
+        if(this.lowerBound > this.upperBound.value) {
+            return 0; // the sub-problem is not a promising one, do not add it into stack
+        }
+
+        // the sub-problem is promising and return its lowerbound for futher comparison
+        return this.lowerBound;
+    }
+
+    /* based on the current partial solution, compute the upperbound of the problem
      * if the upperbound is lower than the current upperbound, update the global upperbound
      * if not, do nothing
      */
     public void checkUpperBound() {
-        if(this.inSolutionNodeNumber + this.subGraph.numEdges < this.upperBound.value) {
-            this.upperBound.value = this.inSolutionNodeNumber + this.subGraph.numEdges;
+        if(this.computeUpperBound() < this.upperBound.value) {
+            this.upperBound.value = this.computeUpperBound();
         }
+    }
+
+    public int computeUpperBound() {
+        return this.inSolutionNodeNumber + this.subGraph.numEdges;
+    }
+    public void setLowerBound() {
+        this.lowerBound = this.computeLowerBound();
+    }
+
+    /* This function is used to compute the lower bound of the current sub-problem
+     *
+     */
+    public int computeLowerBound() {
+        return this.inSolutionNodeNumber + this.subGraph.numEdges / this.subGraph.nodeSet.last().degree + 1;
     }
 
     public static void main(String[] args) {

@@ -1,6 +1,6 @@
 import java.util.*;
 
-public class Local2 {
+public class RunLocal2 {
     public static void main(String[] args)
     {
         ////////////////////////////////////////////////////////////////////////
@@ -36,19 +36,20 @@ public class Local2 {
         /////////////////////////////// EXECUTION //////////////////////////////
         ////////////////////////////////////////////////////////////////////////
 
-        long timeLimit = 120 * 1000000000L;
+        long timeLimit = Long.parseLong(args[1]) * 1000000000L;
         long startTime = System.nanoTime();
         int iterTime = 0;
+        //int dropNum = tempOpt.size() / 2;
         System.out.println(timeLimit);
         while(System.nanoTime() - startTime < timeLimit) {
             iterTime++;
             Double lastUncoveredDC = partialSolution.uncoveredDC;
             Node droppedNode = partialSolution.dropFirst(graph, tabooNodeSet);//DropNode(graph);
-            tabooNodeSet.add(droppedNode);
+            //tabooNodeSet.add(droppedNode);
             Node addedNode = partialSolution.addFirst(graph, tabooNodeSet);//AddNode(graph);
-            tabooNodeSet.clear();
-            tabooNodeSet.add(droppedNode);
-            tabooNodeSet.add(addedNode);
+            //tabooNodeSet.clear();
+            //tabooNodeSet.add(droppedNode);
+            //tabooNodeSet.add(addedNode);
 
             if(partialSolution.uncoveredDC == 0.0 && partialSolution.uncoveredEdge == 0) {
                 tempOpt = partialSolution.partialSolution;
@@ -61,19 +62,20 @@ public class Local2 {
                 tabooSet = new HashSet<>();
                 tabooSet.add(i);
                 partialSolution = new Local2Solution(tempSolution, graph);
-                //System.out.println(tempOpt.size());
             }
 
-            if(droppedNode == null || addedNode == null || droppedNode.nodeNumber == addedNode.nodeNumber || (partialSolution.uncoveredDC >= lastUncoveredDC && lastUncoveredDC != 0)) {
+            if(droppedNode.nodeNumber == addedNode.nodeNumber || (partialSolution.uncoveredDC >= lastUncoveredDC && lastUncoveredDC != 0)) {
                 // when dropped and added the same node, this means we get stuck in local optima
-                if(tabooSet.size() == tempOpt.size() || tabooSet.size() > 300) {
+                if(tabooSet.size() == tempOpt.size()|| tabooSet.size() > 500) {
                     graph.refreshEdgeDC(iterTime); // recopute DC value for each edges
                     tabooSet = new HashSet<>();
-                    int k = 20;//partialSolution.partialSolution.size();
-                    while(k > 0) {
-                        partialSolution.dropRandom(graph);
-                        partialSolution.addRandom(graph);
-                        k--;
+                    partialSolution = new Local2Solution(partialSolution.partialSolution, graph);
+                    int dropNum = tempOpt.size() / 2;
+                    while(dropNum > 0) {
+                        partialSolution.dropRandom(graph, rnd);
+                        partialSolution.addRandom(graph, rnd);
+                        dropNum--;
+                        //System.out.println(partialSolution.partialSolution.size());
                     }
                 } else {
                     tempSolution = new HashSet<>(tempOpt);
