@@ -13,7 +13,8 @@ public class RunBnB {
 
         // initialize the upperBound and bestSolution
         HashSet<Integer> bestSolution = new HashSet<>();
-        BoundValue upperBound = new BoundValue(bestSolution.size());
+        //BoundValue upperBound = new BoundValue(getInitSolution(graph).size());
+        BoundValue upperBound = new BoundValue(graph.numEdges);
 
         // create the initial problem
         SubProblem initialProblem = new SubProblem(bestSolution, upperBound, graph);
@@ -29,7 +30,6 @@ public class RunBnB {
         while(System.nanoTime() - startTime < timeLimit && !problemStack.isEmpty()) {
             // firstly fetch a sub-problem from the problem stack
             SubProblem currentProblem = problemStack.pop();
-
             // expand the problem into 2 sub-problems
             SubProblem leftSubProblem = currentProblem.leftExpandSubProblem();
             SubProblem rightSubProblem = currentProblem.rightExpandSubproblem();
@@ -52,7 +52,8 @@ public class RunBnB {
             } else if(rightValue != 0) {
                 problemStack.push(rightSubProblem);
             }
-            System.out.println(upperBound.value);
+            System.out.println("\n The current upperbound is: " + upperBound.value);
+            //System.out.println("problem stack size = " + problemStack.size() + "\n");
         }
 
         System.out.println("Opt = " + upperBound.value);

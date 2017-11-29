@@ -23,12 +23,21 @@ public class SubProblem {
      * Expand the sub-problem to a new sub-problem by including the highest-degree-node into current solution
      */
     public SubProblem leftExpandSubProblem() {
-
+        //System.out.println("Begin Left Expansion");
         // find the splitNode as the highest-degree node not in the current exludeNodeSet
         NodeDegree splitNode = this.subGraph.nodeSet.last();
+        //System.out.println(splitNode.nodeNumber);
 
         // find the neighbors of the split node
-        HashMap<Integer, Integer> neighbours = this.subGraph.getNeighbours(splitNode.nodeNumber);
+        HashMap<Integer, Integer> neighbours = new HashMap<>(this.subGraph.getNeighbours(splitNode.nodeNumber));
+        HashSet<Integer> deleteNodesSet = new HashSet<>();
+        for(Map.Entry<Integer, Integer> neighbour : neighbours.entrySet()) {
+            //System.out.println("Degree of neighbor:" + neighbour.getKey() + "-" + this.subGraph.nodeList.get(neighbour.getKey()).degree);
+            if(this.subGraph.nodeList.get(neighbour.getKey()).degree == 1) {
+                deleteNodesSet.add(neighbour.getKey());
+            }
+
+        }
 
         // get the partial solution for the expanded sub-problem
         HashSet<Integer> leftInSolutionNodeSet = new HashSet<>(this.inSolutionNodeSet);
@@ -38,22 +47,27 @@ public class SubProblem {
         // get the subGraph for the sub-problem
         BnBGraph leftSubGraph = this.subGraph.clone();
 
+        // System.out.println(splitNode.nodeNumber);
+
         // delete the split node from the subGraph
         leftSubGraph.deleteNode(splitNode.nodeNumber);
 
         // also delete all the neighbors of split node whose degree is only 1
-        for(Map.Entry<Integer, Integer> neighbour : neighbours.entrySet()) {
-            if(neighbour.getValue() == 1) {
-                leftSubGraph.deleteNode(neighbour.getKey());
-            }
+
+        for(Integer nodeNumber : deleteNodesSet) {
+            leftSubGraph.deleteNode(nodeNumber);
+            //System.out.println("Deleting neighbor:" + nodeNumber);
         }
 
         // build the sub-problem
         SubProblem leftSubProblem = new SubProblem(leftInSolutionNodeSet, this.upperBound, leftSubGraph);
+        //System.out.println("Result of Left Expansion");
+        //leftSubProblem.subGraph.printGraph();
         return leftSubProblem;
     }
 
     public SubProblem rightExpandSubproblem() {
+        //System.out.println("Begin Right Expansion");
         // find the splitNode
         NodeDegree splitNode = this.subGraph.nodeSet.last();
 
@@ -80,6 +94,9 @@ public class SubProblem {
 
         // build the sub-problem
         SubProblem rightSubProblem = new SubProblem(rightInSolutionNodeSet, this.upperBound, rightSubGraph);
+        //System.out.println("Result of Right Expansion");
+        //rightSubProblem.subGraph.printGraph();
+        //System.out.println("Edge Number = " + rightSubProblem.subGraph.numEdges);
         return rightSubProblem;
     }
 
@@ -91,20 +108,23 @@ public class SubProblem {
      */
     public int evaluateSubProblem(HashSet<Integer> bestSolution) {
         // firstly update the upperBound and lowerbound
-        this.setLowerBound();
         boolean upBoundState = this.checkUpperBound();
-
+        //System.out.println("Edge Number = " + this.subGraph.numEdges);
         if(this.subGraph.numEdges == 0) {
             //  current partial solution is already a feasible solution to MVC, do not add it into stack
             if(upBoundState == true) {
                 // in this case, you need to update the current bestSolution with its super-problem
                 bestSolution = this.inSolutionNodeSet;
+                //System.out.println("HHHHere");
                 return 0;
             } else {
                 // in this case, you do nothing
+                //System.out.println("Next HHHHere");
                 return 0;
             }
         }
+
+        this.setLowerBound();
         if(this.lowerBound > this.upperBound.value) {
             return 0; // the sub-problem is not a promising one, do not add it into stack
         }
@@ -137,6 +157,8 @@ public class SubProblem {
      *
      */
     public int computeLowerBound() {
+        //this.subGraph.printGraph();
+        //System.out.println("degree = " + this.subGraph.nodeSet.last().degree);
         return this.inSolutionNodeNumber + this.subGraph.numEdges / this.subGraph.nodeSet.last().degree + 1;
     }
 

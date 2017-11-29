@@ -1,3 +1,5 @@
+import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.*;
@@ -16,6 +18,7 @@ public class BnBGraph extends Graph implements Cloneable {
         this.edgeTable = new HashMap<>(); // hash table used to store DC value of each edge
 
         // initialize the nodeList with all degree be 0
+        // also initialize the nodeSet
         NodeDegree tempNode;
         for(int i = 0; i < n; i++) {
             tempNode = new NodeDegree(i, 0);
@@ -26,7 +29,20 @@ public class BnBGraph extends Graph implements Cloneable {
 
     @Override
     public BnBGraph clone() {
+        //System.out.println("the graph to clone");
+        //this.printGraph();
+        //System.out.println("/////////");
         BnBGraph newGraph = new BnBGraph(this.numNodes, this.numEdges);
+        newGraph.graph = new HashMap<>();
+        newGraph.nodeSet = new TreeSet<>();
+        newGraph.nodeList = new ArrayList<>();
+        for(int i = 0; i < this.nodeList.size(); i++) {
+            newGraph.nodeList.add(new NodeDegree(i, 0));
+        }
+        for(Integer nodeNumber : this.graph.keySet()) {
+            newGraph.graph.put(nodeNumber, new HashMap<>());
+            this.nodeSet.add(nodeList.get(nodeNumber));
+        }
         for(Map.Entry<String, Edge> edge : this.edgeTable.entrySet()) {
             Edge edgeItem = edge.getValue();
             newGraph.addEdge(edgeItem.getNode1(), edgeItem.getNode2(), edgeItem.getWeight());
@@ -53,6 +69,8 @@ public class BnBGraph extends Graph implements Cloneable {
                 this.addNodeDegree(node1, 1);
                 this.nodeSet.add(nodeList.get(node1));
             }
+
+
             if(!second.containsKey(node1)) {
                 second.put(node1, weight);
                 this.nodeSet.remove(nodeList.get(node2));
@@ -60,6 +78,8 @@ public class BnBGraph extends Graph implements Cloneable {
                 this.nodeSet.add(nodeList.get(node2));
             }
         }
+        //System.out.println("Cloned Graph ########");
+        //this.printGraph();
     }
 
     public void deleteEdge(int node1, int node2) {
@@ -73,11 +93,12 @@ public class BnBGraph extends Graph implements Cloneable {
             this.edgeTable.remove(edgeString);
             this.numEdges--;
         }
+
         // if the node exists, get the adjacency list of two endpoints of this edge
         // also delete from each other's adjacency list if exist
         // also delete the node degree by 1
-        if(graph.containsKey(node1)) {
-            HashMap<Integer, Integer> first = graph.get(node1);
+        if(this.graph.containsKey(node1)) {
+            HashMap<Integer, Integer> first = this.graph.get(node1);
             if(first.containsKey(node2)) {
                 first.remove(node2);
                 this.nodeSet.remove(nodeList.get(node1));
@@ -86,8 +107,8 @@ public class BnBGraph extends Graph implements Cloneable {
             }
         }
 
-        if(graph.containsKey(node2)) {
-            HashMap<Integer, Integer> second = graph.get(node2);
+        if(this.graph.containsKey(node2)) {
+            HashMap<Integer, Integer> second = this.graph.get(node2);
             if(second.containsKey(node1)) {
                 second.remove(node1);
                 this.nodeSet.remove(nodeList.get(node2));
@@ -102,21 +123,31 @@ public class BnBGraph extends Graph implements Cloneable {
      */
     public NodeDegree deleteNode(int nodeNumber) {
         // first check whether the node exists in the graph
-        if(!graph.containsKey(nodeNumber)) {
+        //this.printGraph();
+        if(!this.graph.containsKey(nodeNumber)) {
             System.out.println("Error in deleteNode: the node to delete does not exist");
         }
 
         // firsly delete all edges incident to this node in the graph
-        HashMap<Integer, Integer> neighbours = graph.get(nodeNumber);
+        HashMap<Integer, Integer> neighbours = this.graph.get(nodeNumber);
+        HashSet<Integer> neighborNumbers = new HashSet<>();
         for(Map.Entry<Integer, Integer> neighbor : neighbours.entrySet()) {
-            this.deleteEdge(nodeNumber, neighbor.getKey());
+            neighborNumbers.add(neighbor.getKey());
+        }
+        for(Integer neighborNumber : neighborNumbers) {
+            this.deleteEdge(nodeNumber, neighborNumber);
         }
 
         // then delete the node from the graph's NodeList and graph
         // also decrease the number of nodes by 1
+        //this.printGraph();
         this.numNodes--;
         this.graph.remove(nodeNumber);
-        return this.nodeList.remove(nodeNumber);
+        this.nodeSet.remove(nodeList.get(nodeNumber));
+        //this.printGraph();
+        //System.out.println(this.nodeSet);
+        //System.out.println(this.nodeList);
+        return this.nodeList.get(nodeNumber);
     }
 
     public void addNodeDegree(int nodeNumber, int increment) {
@@ -164,6 +195,17 @@ public class BnBGraph extends Graph implements Cloneable {
         }
 
         return graph;
+    }
+
+    @Override
+    public void printGraph()
+    {
+        HashMap<Integer, Integer> map = new HashMap<Integer, Integer>();
+        for(Map.Entry<Integer,HashMap<Integer,Integer>> node : this.graph.entrySet())
+        {
+            map = node.getValue();
+            System.out.println(node.getKey()+" : "+map);
+        }
     }
 }
 
