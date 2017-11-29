@@ -1,8 +1,7 @@
 import java.util.*;
 
 public class RunLocal2 {
-    public static void main(String[] args)
-    {
+    public static void main(String[] args) {
         ////////////////////////////////////////////////////////////////////////
         ////////////////////////// INITIALIZATION //////////////////////////////
         ////////////////////////////////////////////////////////////////////////
@@ -40,7 +39,6 @@ public class RunLocal2 {
         long startTime = System.nanoTime();
         int iterTime = 0;
         //int dropNum = tempOpt.size() / 2;
-        System.out.println(timeLimit);
         while(System.nanoTime() - startTime < timeLimit) {
             iterTime++;
             Double lastUncoveredDC = partialSolution.uncoveredDC;

@@ -6,11 +6,13 @@ public class SubProblem {
     int lowerBound; // the best solution can be found along this branch
     BoundValue upperBound; // the current best solution size found for the original problem
     int inSolutionNodeNumber; // number of Vetices already included in the current partial solution
+    HashSet<Integer> inSolutionNodeSet;
     //HashSet<Integer> excludeNodeSet; // the nodes chosen by the partial solution not to included into final solution
     BnBGraph subGraph; // the subGraph of the original graph used to represent the sub-problem to solve
 
-    SubProblem(int inSolutionNodeNumber, BoundValue upperBound, BnBGraph subGraph) {
-        this.inSolutionNodeNumber = inSolutionNodeNumber;
+    SubProblem(HashSet<Integer> inSolutionNodeSet, BoundValue upperBound, BnBGraph subGraph) {
+        this.inSolutionNodeNumber = inSolutionNodeSet.size();
+        this.inSolutionNodeSet = inSolutionNodeSet;
         this.lowerBound = 0;
         this.upperBound = upperBound;
         //this.excludeNodeSet = new HashSet<>(excludeNodeSet);
@@ -28,8 +30,10 @@ public class SubProblem {
         // find the neighbors of the split node
         HashMap<Integer, Integer> neighbours = this.subGraph.getNeighbours(splitNode.nodeNumber);
 
-        // get the size of partial solution for the expanded sub-problem
-        int leftInSolutionNodeNumber = this.inSolutionNodeNumber + 1;
+        // get the partial solution for the expanded sub-problem
+        HashSet<Integer> leftInSolutionNodeSet = new HashSet<>(this.inSolutionNodeSet);
+        leftInSolutionNodeSet.add(splitNode.nodeNumber);
+        //int leftInSolutionNodeNumber = this.inSolutionNodeNumber + 1;
 
         // get the subGraph for the sub-problem
         BnBGraph leftSubGraph = this.subGraph.clone();
@@ -45,7 +49,7 @@ public class SubProblem {
         }
 
         // build the sub-problem
-        SubProblem leftSubProblem = new SubProblem(leftInSolutionNodeNumber, this.upperBound, leftSubGraph);
+        SubProblem leftSubProblem = new SubProblem(leftInSolutionNodeSet, this.upperBound, leftSubGraph);
         return leftSubProblem;
     }
 
@@ -56,8 +60,12 @@ public class SubProblem {
         // find the neighbors of the split node
         HashMap<Integer, Integer> neighbours = this.subGraph.getNeighbours(splitNode.nodeNumber);
 
-        // get the size of partial solution for the expanded sub-problem
-        int rightInSolutionNodeNumber = this.inSolutionNodeNumber + splitNode.degree;
+        // get partial solution for the expanded sub-problem
+        // int rightInSolutionNodeNumber = this.inSolutionNodeNumber + splitNode.degree;
+        HashSet<Integer> rightInSolutionNodeSet = new HashSet<>(this.inSolutionNodeSet);
+        for(Map.Entry<Integer, Integer> neighbour : neighbours.entrySet()) {
+            rightInSolutionNodeSet.add(neighbour.getKey());
+        }
 
         // get the subGraph for the sub-problem
         BnBGraph rightSubGraph = this.subGraph.clone();
@@ -71,7 +79,7 @@ public class SubProblem {
         rightSubGraph.deleteNode(splitNode.nodeNumber);
 
         // build the sub-problem
-        SubProblem rightSubProblem = new SubProblem(rightInSolutionNodeNumber, this.upperBound, rightSubGraph);
+        SubProblem rightSubProblem = new SubProblem(rightInSolutionNodeSet, this.upperBound, rightSubGraph);
         return rightSubProblem;
     }
 
@@ -81,13 +89,21 @@ public class SubProblem {
      * If the computed lower bound of the sub-problem is lower than the upperbound, then the sub-prorblem is promising
      * If the current sub-problem is
      */
-    public int evaluateSubProblem() {
+    public int evaluateSubProblem(HashSet<Integer> bestSolution) {
         // firstly update the upperBound and lowerbound
         this.setLowerBound();
-        this.checkUpperBound();
+        boolean upBoundState = this.checkUpperBound();
 
         if(this.subGraph.numEdges == 0) {
-            return 0; //  current partial solution is already a feasible solution to MVC, do not add it into stack
+            //  current partial solution is already a feasible solution to MVC, do not add it into stack
+            if(upBoundState == true) {
+                // in this case, you need to update the current bestSolution with its super-problem
+                bestSolution = this.inSolutionNodeSet;
+                return 0;
+            } else {
+                // in this case, you do nothing
+                return 0;
+            }
         }
         if(this.lowerBound > this.upperBound.value) {
             return 0; // the sub-problem is not a promising one, do not add it into stack
@@ -100,11 +116,14 @@ public class SubProblem {
     /* based on the current partial solution, compute the upperbound of the problem
      * if the upperbound is lower than the current upperbound, update the global upperbound
      * if not, do nothing
+     * if upper bound is updated, return true, else return false
      */
-    public void checkUpperBound() {
+    public boolean checkUpperBound() {
         if(this.computeUpperBound() < this.upperBound.value) {
             this.upperBound.value = this.computeUpperBound();
+            return true;
         }
+        return false;
     }
 
     public int computeUpperBound() {

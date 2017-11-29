@@ -125,6 +125,7 @@ public class BnBGraph extends Graph implements Cloneable {
     }
 
     public void decreaseNodeDegree(int nodeNumber, int decrement) {
+
         this.nodeList.get(nodeNumber).degree -= decrement;
     }
 
