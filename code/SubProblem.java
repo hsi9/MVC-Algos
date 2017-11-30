@@ -9,14 +9,16 @@ public class SubProblem {
     HashSet<Integer> inSolutionNodeSet;
     //HashSet<Integer> excludeNodeSet; // the nodes chosen by the partial solution not to included into final solution
     BnBGraph subGraph; // the subGraph of the original graph used to represent the sub-problem to solve
+    HashSet<Integer> bestSolution;
 
-    SubProblem(HashSet<Integer> inSolutionNodeSet, BoundValue upperBound, BnBGraph subGraph) {
+    SubProblem(HashSet<Integer> inSolutionNodeSet, BoundValue upperBound, BnBGraph subGraph, HashSet<Integer> bestSolution) {
         this.inSolutionNodeNumber = inSolutionNodeSet.size();
         this.inSolutionNodeSet = inSolutionNodeSet;
         this.lowerBound = 0;
         this.upperBound = upperBound;
         //this.excludeNodeSet = new HashSet<>(excludeNodeSet);
         this.subGraph = subGraph;
+        this.bestSolution = bestSolution;
     }
 
     /*
@@ -60,7 +62,7 @@ public class SubProblem {
         }
 
         // build the sub-problem
-        SubProblem leftSubProblem = new SubProblem(leftInSolutionNodeSet, this.upperBound, leftSubGraph);
+        SubProblem leftSubProblem = new SubProblem(leftInSolutionNodeSet, this.upperBound, leftSubGraph, this.bestSolution);
         //System.out.println("Result of Left Expansion");
         //leftSubProblem.subGraph.printGraph();
         return leftSubProblem;
@@ -93,7 +95,7 @@ public class SubProblem {
         rightSubGraph.deleteNode(splitNode.nodeNumber);
 
         // build the sub-problem
-        SubProblem rightSubProblem = new SubProblem(rightInSolutionNodeSet, this.upperBound, rightSubGraph);
+        SubProblem rightSubProblem = new SubProblem(rightInSolutionNodeSet, this.upperBound, rightSubGraph, this.bestSolution);
         //System.out.println("Result of Right Expansion");
         //rightSubProblem.subGraph.printGraph();
         //System.out.println("Edge Number = " + rightSubProblem.subGraph.numEdges);
@@ -106,7 +108,7 @@ public class SubProblem {
      * If the computed lower bound of the sub-problem is lower than the upperbound, then the sub-prorblem is promising
      * If the current sub-problem is
      */
-    public int evaluateSubProblem(HashSet<Integer> bestSolution) {
+    public int evaluateSubProblem() {
         // firstly update the upperBound and lowerbound
         boolean upBoundState = this.checkUpperBound();
         //System.out.println("Edge Number = " + this.subGraph.numEdges);
@@ -114,12 +116,10 @@ public class SubProblem {
             //  current partial solution is already a feasible solution to MVC, do not add it into stack
             if(upBoundState == true) {
                 // in this case, you need to update the current bestSolution with its super-problem
-                bestSolution = this.inSolutionNodeSet;
-                //System.out.println("HHHHere");
-                return 0;
+                this.bestSolution = this.inSolutionNodeSet;
+                return -1;
             } else {
                 // in this case, you do nothing
-                //System.out.println("Next HHHHere");
                 return 0;
             }
         }
@@ -139,7 +139,7 @@ public class SubProblem {
      * if upper bound is updated, return true, else return false
      */
     public boolean checkUpperBound() {
-        if(this.computeUpperBound() < this.upperBound.value) {
+        if(this.computeUpperBound() <= this.upperBound.value) {
             this.upperBound.value = this.computeUpperBound();
             return true;
         }
@@ -159,7 +159,8 @@ public class SubProblem {
     public int computeLowerBound() {
         //this.subGraph.printGraph();
         //System.out.println("degree = " + this.subGraph.nodeSet.last().degree);
-        return this.inSolutionNodeNumber + this.subGraph.numEdges / this.subGraph.nodeSet.last().degree + 1;
+        //return this.inSolutionNodeNumber + this.subGraph.numEdges / this.subGraph.nodeSet.last().degree + 1;
+        return this.inSolutionNodeNumber + this.findMinimalMatching();
     }
 
     public static void main(String[] args) {
@@ -168,6 +169,34 @@ public class SubProblem {
         b.value = 2;
         System.out.println(a.value);
     }
+
+    public int findMinimalMatching() {
+        BnBGraph tempGraph = this.subGraph.clone();
+        int numVertices = 0;
+        while(tempGraph.numEdges > 0) {
+            int node1 = -1;
+            int node2 = -1;
+            for(Map.Entry<String,Edge> edgeItem : tempGraph.edgeTable.entrySet()) {
+                node1 = edgeItem.getValue().node1;
+                node2 = edgeItem.getValue().node2;
+                break;
+            }
+            tempGraph.deleteNode(node1);
+            tempGraph.deleteNode(node2);
+            numVertices += 2;
+        }
+        return numVertices / 2;
+    }
+
+//    public int findLPSolution() {
+//        LinearProgram lp = new LinearProgram(new double[]{5.0,10.0});
+//        lp.addConstraint(new LinearBiggerThanEqualsConstraint(new double[]{3.0,1.0}, 8.0, "c1"));
+//        lp.addConstraint(new LinearBiggerThanEqualsConstraint(new double[]{0.0,4.0}, 4.0, "c2"));
+//        lp.addConstraint(new LinearSmallerThanEqualsConstraint(new double[]{2.0,0.0}, 2.0, "c3"));
+//        lp.setMinProblem(true);
+//        LinearProgramSolver solver  = SolverFactory.newDefault();
+//        double[] sol = solver.solve(lp);
+//    }
 
 }
 
