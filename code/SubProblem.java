@@ -1,8 +1,19 @@
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.util.*;
+//import src.main.java.com.joptimizer.algebra.*;
+//import src.main.java.com.joptimizer.exception.*;
+//import src.main.java.com.joptimizer.functions.LinearMultivariateRealFunction;
+//import src.main.java.com.joptimizer.optimizers.*;
+//import src.main.java.com.joptimizer.solvers.*;
+//import src.main.java.com.joptimizer.util.*;
+import scpsolver.problems.LinearProgram;
+import scpsolver.constraints.LinearBiggerThanEqualsConstraint;
+import scpsolver.constraints.LinearSmallerThanEqualsConstraint;
+import scpsolver.lpsolver.LinearProgramSolver;
+import scpsolver.lpsolver.SolverFactory;
 
-public class SubProblem {
+class SubProblem {
     int lowerBound; // the best solution can be found along this branch
     BoundValue upperBound; // the current best solution size found for the original problem
     int inSolutionNodeNumber; // number of Vetices already included in the current partial solution
@@ -139,7 +150,7 @@ public class SubProblem {
      * if upper bound is updated, return true, else return false
      */
     public boolean checkUpperBound() {
-        if(this.computeUpperBound() <= this.upperBound.value) {
+        if(this.computeUpperBound() < this.upperBound.value) {
             this.upperBound.value = this.computeUpperBound();
             return true;
         }
@@ -147,9 +158,11 @@ public class SubProblem {
     }
 
     public int computeUpperBound() {
+
         return this.inSolutionNodeNumber + this.subGraph.numEdges;
     }
     public void setLowerBound() {
+
         this.lowerBound = this.computeLowerBound();
     }
 
@@ -160,15 +173,17 @@ public class SubProblem {
         //this.subGraph.printGraph();
         //System.out.println("degree = " + this.subGraph.nodeSet.last().degree);
         //return this.inSolutionNodeNumber + this.subGraph.numEdges / this.subGraph.nodeSet.last().degree + 1;
-        return this.inSolutionNodeNumber + this.findMinimalMatching();
+        //return this.inSolutionNodeNumber + this.findMinimalMatching();
+        //return this.inSolutionNodeNumber + this.newLowerBound();
+        //return Math.max(this.inSolutionNodeNumber + this.findMinimalMatching(), this.inSolutionNodeNumber + this.newLowerBound());
+        return this.inSolutionNodeNumber + this.findLPSolution();
+        //return this.inSolutionNodeNumber + Math.max(this.findLPSolution(), this.findMinimalMatching());
     }
 
-    public static void main(String[] args) {
-        BoundValue a = new  BoundValue(1);
-        BoundValue b = a;
-        b.value = 2;
-        System.out.println(a.value);
-    }
+//    public static void main(String[] args) {
+//        int sol = findLPSolution();
+//        System.out.println(Arrays.toString(sol));
+//    }
 
     public int findMinimalMatching() {
         BnBGraph tempGraph = this.subGraph.clone();
@@ -188,15 +203,73 @@ public class SubProblem {
         return numVertices / 2;
     }
 
-//    public int findLPSolution() {
-//        LinearProgram lp = new LinearProgram(new double[]{5.0,10.0});
-//        lp.addConstraint(new LinearBiggerThanEqualsConstraint(new double[]{3.0,1.0}, 8.0, "c1"));
-//        lp.addConstraint(new LinearBiggerThanEqualsConstraint(new double[]{0.0,4.0}, 4.0, "c2"));
-//        lp.addConstraint(new LinearSmallerThanEqualsConstraint(new double[]{2.0,0.0}, 2.0, "c3"));
-//        lp.setMinProblem(true);
-//        LinearProgramSolver solver  = SolverFactory.newDefault();
-//        double[] sol = solver.solve(lp);
-//    }
+    public int findLPSolution() {
+
+        // firstly initialize the double arrays for objective functions and constraints
+        double[] toolArray = new double[this.subGraph.nodeList.size()];
+        double[] objectiveFunction = new double[this.subGraph.nodeList.size()];
+        for(int index = 0; index < this.subGraph.numNodes; index++) {
+            toolArray[index] = 0.0;
+            objectiveFunction[index] = 1.0;
+        }
+
+        // initialize the Linear Problem
+        LinearProgram lp = new LinearProgram(objectiveFunction);
+
+        // add values to constraints
+        Integer constraintNumber = 1;
+        for(Map.Entry<String, Edge> edgeItems : this.subGraph.edgeTable.entrySet()) {
+            double[] edgeConstraint = toolArray.clone();
+            Edge edge = edgeItems.getValue();
+            edgeConstraint[edge.getNode1()] = 1.0;
+//            System.out.println(edge.getNode2());
+//            System.out.println("///////////////");
+//            System.out.println(this.subGraph.numNodes);
+            edgeConstraint[edge.getNode2()] = 1.0;
+            lp.addConstraint(new LinearBiggerThanEqualsConstraint(edgeConstraint, 1.0, "c" + constraintNumber.toString()));
+            constraintNumber++;
+        }
+
+        // add variable-wise constraints x_i in [0,1]
+        for(int index = 0; index < this.subGraph.numNodes; index++) {
+            double[] variableConstraint = toolArray.clone();
+            variableConstraint[index] = 1.0;
+            lp.addConstraint(new LinearBiggerThanEqualsConstraint(variableConstraint, 0.0, "c" + constraintNumber.toString()));
+            lp.addConstraint(new LinearSmallerThanEqualsConstraint(variableConstraint, 1.0, "c" + constraintNumber.toString()));
+            constraintNumber++;
+        }
+
+        lp.setMinProblem(true);
+
+        // solve the linear problem and get the solution
+        LinearProgramSolver solver  = SolverFactory.newDefault();
+        double[] sol = solver.solve(lp);
+
+        // add the solution to get the value
+        double lowerBound = 0.0;
+        int intLowerBound = 0;
+        for(int index = 0; index < this.subGraph.numNodes; index++) {
+            lowerBound += sol[index];
+            intLowerBound += Math.round(sol[index]);
+        }
+
+        //return (int) Math.floor(lowerBound) + 1;
+        return intLowerBound / 2;
+    }
+
+
+    public int newLowerBound() {
+        int tempNumEdge = this.subGraph.numEdges;
+        int lowerBound = 0;
+        NodeDegree tempVertex = this.subGraph.nodeSet.last();
+        while(tempNumEdge > 0) {
+            tempNumEdge -= tempVertex.degree;
+            lowerBound++;
+            tempVertex = this.subGraph.nodeSet.lower(tempVertex);
+        }
+        return lowerBound;
+    }
+
 
 }
 

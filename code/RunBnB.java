@@ -13,8 +13,8 @@ public class RunBnB {
 
         // initialize the upperBound and bestSolution
         HashSet<Integer> bestSolution = new HashSet<>();
-        //BoundValue upperBound = new BoundValue(getInitSolution(graph).size());
-        BoundValue upperBound = new BoundValue(graph.numEdges);
+        BoundValue upperBound = new BoundValue(getInitSolution(graph).size());
+        //BoundValue upperBound = new BoundValue(graph.numEdges);
 
         // create the initial problem
         SubProblem initialProblem = new SubProblem(bestSolution, upperBound, graph, bestSolution);

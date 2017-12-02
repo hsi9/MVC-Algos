@@ -2,7 +2,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeSet;
 
-public class NodeDegree implements Comparable<NodeDegree> {
+class NodeDegree implements Comparable<NodeDegree> {
 
 	public NodeDegree(int nodeNumber, int degree) {
 		this.nodeNumber = nodeNumber;

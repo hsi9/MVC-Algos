@@ -4,7 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.*;
 
-public class BnBGraph extends Graph implements Cloneable {
+class BnBGraph extends Graph implements Cloneable {
     int numEdges;
     TreeSet<NodeDegree> nodeSet;
     List<NodeDegree> nodeList;
